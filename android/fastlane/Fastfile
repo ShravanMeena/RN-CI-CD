@@ -1,0 +1,119 @@
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+# default_platform(:android)
+
+# platform :android do
+
+# before_all do
+# 	ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+# end
+
+# lane :slack_build do
+#   gradle(task: "assembleRelease")
+#   slack(message: "Build Successful!")
+#   upload_to_slack()
+# end
+
+# # Add this to your Fastfile
+# desc "Upload the APK to Slack channel"
+# private_lane :upload_to_slack do |options|
+#   file_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+#   file_name = file_path.gsub(/\/.*\//,"")
+#   access_token = "xoxb-5393909090467-5387976639190-ZfuxaDtj99dLlrCeZE4ZzY4c"
+#   channel_name = "android"
+#   sh "echo Uploading " + file_name + " to Slack"
+#   sh "curl https://slack.com/api/files.upload -F token=\"" + access_token + "\" -F channels=\"" + channel_name + "\" -F title=\"" + file_name + "\" -F filename=\"" + file_name + "\" -F file=@" + file_path
+# end
+
+# after_all do |lane|
+# 	slack(
+# 		message: "You got a new APK"
+# 		)
+# 	end
+
+# 	error do |lane, exception|
+# 		slack(
+# 			message: exception.message,
+# 			success:false
+# 		)
+# 	end
+# end
+
+
+default_platform(:android)
+
+platform :android do
+  before_all do
+    ENV["SLACK_URL"] = "https://hooks.slack.com/services/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"
+  end
+
+  lane :slack_build do
+    gradle(task: "assembleRelease")
+    slack(message: "Build Successful!")
+    upload_to_slack()
+  end
+
+
+#   Upload the APK to Slack channel
+  desc "Upload the APK to Slack channel"
+  private_lane :upload_to_slack do |options|
+    file_path = lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH]
+    file_name = file_path.gsub(/\/.*\//, "")
+    access_token = "xoxb-5393909090467-5387976639190-ZfuxaDtj99dLlrCeZE4ZzY4c"
+    channel_name = "android"
+    sh "echo Uploading " + file_name + " to Slack"
+    sh "curl https://slack.com/api/files.upload -F token=\"" + access_token + "\" -F channels=\"" + channel_name + "\" -F title=\"" + file_name + "\" -F filename=\"" + file_name + "\" -F file=@" + file_path
+  end
+
+  after_all do |lane|
+    slack(
+      message: "You got a new APK"
+    )
+  end
+
+  error do |lane, exception|
+    slack(
+      message: exception.message,
+      success: false
+    )
+  end
+end
+
+# Deploy a new version to the Google Play
+desc "Deploy a new version to the Google Play"
+lane :deploy do
+  gradle(task: 'clean')
+  gradle(
+    task: 'assemble',
+    build_type: 'Release',
+    properties: {
+      "android.injected.signing.store.file" => "/home/cancer/Downloads/DemoFastlane/DemoFastlane.jks",
+      "android.injected.signing.store.password" => "softence",
+      "android.injected.signing.key.alias" => "DemoFastlane",
+      "android.injected.signing.key.password" => "softence"
+    }
+  )
+  upload_to_play_store(track: 'alpha')
+end
+
+
+# Deploy a beta version to the Google Play
+desc "Deploy a beta version to the Google Play"
+lane :beta do
+	gradle(task: "clean bundleRelease")
+	upload_to_play_store(track: 'beta', release_status: 'draft')
+end
+
+# Deploy a new version to the Google Play
+desc "Deploy a new version to the Google Play"
+lane :production do
+	gradle(task: "clean bundleRelease")
+	upload_to_play_store(release_status: 'draft')
+end
+
+after_all do |lane|
+end
+
+error do |lane, exception|
+end
