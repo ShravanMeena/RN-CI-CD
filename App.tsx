@@ -81,6 +81,8 @@ function App(): JSX.Element {
             screen and then come back to see your edits.
             screen and then come back to see your edits.
             screen and then come back to see your edits.
+            BETA TEST
+
           </Section>
           <Section title="See Your Changes">
             <ReloadInstructions />
